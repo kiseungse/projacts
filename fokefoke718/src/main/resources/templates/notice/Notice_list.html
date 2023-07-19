@@ -1,0 +1,64 @@
+<html xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{fragments/layout}">
+	<th:block layout:fragment="content">
+<body>
+	
+	<section class="breadcrumb-option">
+		<div class="container">
+			<div class="row">
+				<div class="col-lg-12">
+					<div class="breadcrumb__text">
+						<h4>공지&이벤트</h4>
+						<div class="breadcrumb__links">
+							<a href="/noticedetail">Home</a><span>공지&이벤트</span>
+						</div>
+					</div>
+				</div>
+			</div>
+		</div>
+	</section>
+	
+	<!--리스트-->
+	<section class="blog spad"> 
+	    <div class="container"> 
+	        <div class="row"> 
+				<div class="col-lg-4 col-md-6 col-sm-6" th:each="notice, loop : ${paging}">
+                    <div class="blog__item">
+                        <div class="blog__item__pic set-bg" th:attr="style='background-image: url(' + @{'/notice/display/'+${notice.noticeImage}} + ');'"></div>
+                        <div class="blog__item__text">
+                            <img th:src="@{/img/icon/calendar.png}" alt=""><span th:text="${#temporals.format(notice.noticeDate, 'yyyy-MM-dd HH:mm')}"></span>
+                            <h5 th:href="@{|/notice/detail/${notice.noticeId}|}" th:text="${notice.noticeTitle}"></h5>
+                            <a th:href="@{|/notice/detail/${notice.noticeId}|}">자세히 보기</a>
+                        </div>
+                    </div>
+                </div>
+	        </div>
+	    </div>
+    <!-- 페이징처리 시작 -->
+       <div class="row">
+          <div class="col-lg-12">
+             <div th:if="${!paging.isEmpty()}" class="product__pagination">
+
+                <span class="paginate_button prev" th:classappend="${!paging.hasPrevious} ? 'disabled'">
+                   <a th:href="@{|?page=${paging.number-1}|}" th:if="${paging.hasPrevious}">
+                      이전
+                   </a>
+                </span>
+                <span th:each="page: ${#numbers.sequence(0, paging.totalPages-1)}"
+                   th:if="${page >= paging.number-5 and page <= paging.number+5}"
+                   th:classappend="${page == paging.number} ? 'active'" class="paginate_button active">
+                   <a th:text="${page + 1}" class="paginate_button"
+                      th:href="@{|?page=${page}|}"></a>
+                </span>
+                <span class="paginate_button next" th:classappend="${!paging.hasNext} ? 'disabled'">
+                   <a th:href="@{|?page=${paging.number+1}|}" th:if="${paging.hasNext}">
+                      다음
+                   </a>
+                </span>
+             </div>
+          </div>
+       </div>
+       <!-- 페이징처리 끝 -->
+	</section>
+</body>
+</th:block>	
+</html>

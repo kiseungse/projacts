@@ -1,0 +1,292 @@
+<html lang="ko" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout" layout:decorate="~{adminconfig/layout}">
+	<th:block layout:fragment="content">
+
+<body>
+
+            <!-- Sale & Revenue Start -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="row g-4">
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+                            <i class="fa fa-chart-line fa-3x text-primary"></i>
+                            <div class="ms-3">
+                                <p class="mb-2">Today Sale</p>
+                                <h6 class="mb-0">$1234</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+                            <i class="fa fa-chart-bar fa-3x text-primary"></i>
+                            <div class="ms-3">
+                                <p class="mb-2">Total Sale</p>
+                                <h6 class="mb-0">$1234</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+                            <i class="fa fa-chart-area fa-3x text-primary"></i>
+                            <div class="ms-3">
+                                <p class="mb-2">Today Revenue</p>
+                                <h6 class="mb-0">$1234</h6>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-sm-6 col-xl-3">
+                        <div class="bg-light rounded d-flex align-items-center justify-content-between p-4">
+                            <i class="fa fa-chart-pie fa-3x text-primary"></i>
+                            <div class="ms-3">
+                                <p class="mb-2">Total Revenue</p>
+                                <h6 class="mb-0">$1234</h6>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Sale & Revenue End -->
+
+
+            <!-- 차트 -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="row g-4">
+                    <div class="col-sm-12 col-xl-6">
+                        <div class="bg-light text-center rounded p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <h6 class="mb-0">인기 상품 분석차트</h6>
+<!--                            <a href="/payment/paymentchart">Show All</a>-->
+                            </div>
+<!--                        <canvas id="worldwide-sales"></canvas>-->
+							<canvas id="productChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                    <div class="col-sm-12 col-xl-6">
+                        <div class="bg-light text-center rounded p-4">
+                            <div class="d-flex align-items-center justify-content-between mb-4">
+                                <h6 class="mb-0">지역별 분석차트</h6>
+<!--                             <a href="/cart/cartstorechart">Show All</a>-->
+                            </div>
+<!--                            <canvas id="cartStoreChart" width="400" height="400"></canvas>-->
+								<canvas id="cartAndPaymentChart" width="400" height="400"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- 분석 차트 End -->
+
+
+            <!-- 매출 -->
+            <div class="container-fluid pt-4 px-4">
+                <div class="bg-light text-center rounded p-4" >
+                    <div class="d-flex align-items-center justify-content-between mb-4">
+                        <h6 class="mb-0">전체 매출</h6>
+<!--                    <a href="">Show All</a>-->
+                    </div>
+                    	<canvas id="revenueChart" width="400" height="150"></canvas>
+<!-- 					<canvas id="productChart" width="400" height="400"></canvas>-->
+                   
+                </div>
+            </div>
+            <!-- 매출 End -->
+
+
+<script>//인기상품차트
+  async function fetchAllData() {
+    const responseCart = await fetch('/api/cart/most-added-products');
+    const mostAddedProductsCart = await responseCart.json();
+
+    const responsePayment = await fetch('/api/payment/most-added-products');
+    const mostAddedProductsPayment = await responsePayment.json();
+
+    const combinedData = combineAndSortData(mostAddedProductsCart, mostAddedProductsPayment);
+    createCartAndPaymentChart(combinedData.cartData, combinedData.paymentData, combinedData.labels);
+  }
+
+  function combineAndSortData(cartData, paymentData) {
+    const uniqueProductNames = [
+      ...new Set([...cartData.map(item => item[0]), ...paymentData.map(item => item[0])])
+    ].sort();
+
+    const combinedCartData = uniqueProductNames.map(name => {
+      const item = cartData.find(item => item[0] === name);
+      return item ? item[1] : 0;
+    });
+
+    const combinedPaymentData = uniqueProductNames.map(name => {
+      const item = paymentData.find(item => item[0] === name);
+      return item ? item[1] : 0;
+    });
+
+    return {
+      cartData: combinedCartData,
+      paymentData: combinedPaymentData,
+      labels: uniqueProductNames
+    };
+  }
+
+  function createCartAndPaymentChart(cartData, paymentData, labels) {
+    var ctx = document.getElementById('productChart').getContext('2d');
+
+    var cartAndPaymentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: '장바구니에 담긴 상품목록',
+              data: cartData,
+			  backgroundColor: 'rgba(30, 130, 76, 0.2)',
+			  borderColor: 'rgba(30, 130, 76, 1)',
+              borderWidth: 1
+            },
+            {
+              label: '실제 구매한 상품목록',
+              data: paymentData,
+              backgroundColor: 'rgba(255, 152, 0, 0.2)',
+              borderColor: 'rgba(255, 152, 0, 1)',
+              borderWidth: 1
+            }
+          ]
+        },
+        options: {
+          scales: {
+            y: { beginAtZero: true }
+          }
+        }
+    });
+  }
+  
+  fetchAllData();
+</script>
+
+<script>//지역별차트
+async function fetchAllData() {
+    const responseCart = await fetch('/api/cart/most-added-store');
+    const mostAddedStoresCart = await responseCart.json();
+    
+    const responsePayment = await fetch('/api/payment/most-added-store');
+    const mostAddedStoresPayment = await responsePayment.json();
+    
+    createChart(mostAddedStoresCart, mostAddedStoresPayment);
+}
+
+function createChart(cartData, paymentData) {
+    const labelsCart = cartData.map(item => item[0]);
+    const labelsPayment = paymentData.map(item => item[0]);
+    const uniqueLabels = [...new Set([...labelsCart, ...labelsPayment])].sort();
+    
+    const cartCounts = uniqueLabels.map(label => {
+      const item = cartData.find(item => item[0] === label);
+      return item ? item[1] : 0;
+    });
+    
+    const paymentCounts = uniqueLabels.map(label => {
+      const item = paymentData.find(item => item[0] === label);
+      return item ? item[1] : 0;
+    });
+
+    var ctx = document.getElementById('cartAndPaymentChart').getContext('2d');
+    var cartAndPaymentChart = new Chart(ctx, {
+        type: 'bar',
+        data: {
+            labels: uniqueLabels,
+            datasets: [
+                {
+                    label: '지역별 장바구니 상품목록',
+                    data: cartCounts,
+                    backgroundColor: 'rgba(30, 130, 76, 0.2)',
+                    borderColor: 'rgba(30, 130, 76, 1)',
+                    borderWidth: 1
+                },
+                {
+                    label: '지역별 결제 상품목록',
+                    data: paymentCounts,
+                    backgroundColor: 'rgba(255, 152, 0, 0.2)',
+                    borderColor: 'rgba(255, 152, 0, 1)',
+                    borderWidth: 1
+                }
+            ]
+        },
+        options: {
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    stacked: true
+                },
+                x: {
+                    stacked: true
+                }
+            },
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: (context) => {
+                            const label = context.dataset.label;
+                            const value = context.raw;
+                            return `${label}: ${value}`;
+                        }
+                    }
+                }
+            }
+        }
+    });
+}
+
+fetchAllData();
+</script>
+
+<script>//매출
+    async function fetchAllData() {
+        const response = await fetch('/api/payment/revenue');
+        const mostAddedProducts = await response.json();
+        createRevenueChart(mostAddedProducts);
+    }
+
+    function createRevenueChart(mostAddedProducts) {
+        var ctx = document.getElementById('revenueChart').getContext('2d');
+        var labels = [];
+        var data = [];
+        for (var i = 0; i < mostAddedProducts.length; i++) {
+            labels.push(mostAddedProducts[i][0]);
+            data.push(mostAddedProducts[i][1]);
+        }
+        var cartChart = new Chart(ctx, {
+            type: 'line', // 수정된 부분
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: '일 별 매출',
+                    data: data,
+					backgroundColor: 'rgba(255, 0, 0, 0.2)',
+					borderColor: 'rgba(255, 0, 0, 1)',
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                scales: {
+                    y: { beginAtZero: true }
+                }
+            }
+        });
+    }
+    fetchAllData();
+    
+</script>
+
+    
+	<!-- JavaScript Libraries -->
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="/lib/chart/chart.min.js"></script>
+    <script src="/lib/easing/easing.min.js"></script>
+    <script src="/lib/waypoints/waypoints.min.js"></script>
+    <script src="/lib/owlcarousel/owl.carousel.min.js"></script>
+    <script src="/lib/tempusdominus/js/moment.min.js"></script>
+    <script src="/lib/tempusdominus/js/moment-timezone.min.js"></script>
+    <script src="/lib/tempusdominus/js/tempusdominus-bootstrap-4.min.js"></script>
+    
+    <!-- Template Javascript -->
+    <script src="/js/admin/main.js"></script>
+</body>
+</th:block>
+</html>
